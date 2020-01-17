@@ -29,11 +29,11 @@ sales_year_region <- function(df){
 }
 
 # Q3 append column with no of days difference from present date to each order date
-days_diff <- function(df){
-  df<- mutate(df,days_diff = Sys.Date()-ymd(OrderDate))
+days_diff <- function(df,ref_date){
+  df<- mutate(df,days_diff = date(ref_date)-date(OrderDate))
   return(df)
 }
-
+#print(days_diff(df_s,'2020-01-16'))
 
 # Q4 get dataframe with manager as first column and  salesman under them as lists in rows in second column.
 mgr_slsmn <- function(df){
