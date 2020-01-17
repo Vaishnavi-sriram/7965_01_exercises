@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[54]:
 
 
 # import pandas, numpy
@@ -12,10 +12,10 @@ import pandas as pd
 df_s = pd.read_excel('SaleData.xlsx')
 df_i = pd.read_csv('imdb.csv',escapechar = "\\")
 df_d = pd.read_csv('diamonds.csv')
-df_m = pd.read_csv('movie_metadata.csv')
+df_m = pd.read_csv('movie_metadata.csv',escapechar = "\\")
 
 
-# In[2]:
+# In[55]:
 
 
 # Q1 Find least sales amount for each item
@@ -26,7 +26,7 @@ def least_sales(df):
     return ls
 
 
-# In[3]:
+# In[56]:
 
 
 # Q2 compute total sales at each year X region
@@ -36,17 +36,17 @@ def sales_year_region(df):
 	return syr
 
 
-# In[4]:
+# In[57]:
 
 
 
 # Q3 append column with no of days difference from present date to each order date
-def days_diff(df):
-	df['days_diff'] = pd.to_datetime(date.today()) - df['OrderDate']
+def days_diff(df,date):
+	df['days_diff'] = pd.to_datetime(date) - df['OrderDate']
 	return df
 
 
-# In[5]:
+# In[58]:
 
 
 # Q4 get dataframe with manager as first column and  salesman under them as lists in rows in second column.
@@ -55,7 +55,7 @@ def mgr_slsmn(df):
 	return ms
 
 
-# In[6]:
+# In[59]:
 
 
 # Q5 For all regions find number of salesman and number of units
@@ -66,7 +66,7 @@ def slsmn_units(df):
 	return su
 
 
-# In[7]:
+# In[60]:
 
 
 # Q6 Find total sales as percentage for each manager
@@ -77,7 +77,7 @@ def sales_pct(df):
 	return sp
 
 
-# In[8]:
+# In[61]:
 
 
 # Q7 get imdb rating for fifth movie of dataframe
@@ -86,7 +86,7 @@ def fifth_movie(df):
 	return fm
 
 
-# In[9]:
+# In[62]:
 
 
 # Q8 return titles of movies with shortest and longest run time
@@ -97,7 +97,7 @@ def movies(df):
 	return m
 
 
-# In[10]:
+# In[63]:
 
 
 # Q9 sort by two columns - release_date (earliest) and Imdb rating(highest to lowest)
@@ -106,7 +106,7 @@ def sort_df(df):
 	return sd
 
 
-# In[11]:
+# In[64]:
 
 
 # Q10 subset revenue more than 2 million and spent less than 1 million & duration between 30 mintues to 180 minutes
@@ -115,7 +115,7 @@ def subset_df(df):
 	return sd
 
 
-# In[12]:
+# In[65]:
 
 
 # Q11 count the duplicate rows of diamonds DataFrame.
@@ -124,7 +124,7 @@ def dupl_rows(df):
 	return dr
 
 
-# In[13]:
+# In[66]:
 
 
 # Q12 droping those rows where any value in a row is missing in carat and cut columns
@@ -133,7 +133,7 @@ def drop_row(df):
 	return dr
 
 
-# In[14]:
+# In[67]:
 
 
 # Q13 subset only numeric columns
@@ -142,9 +142,10 @@ def sub_numeric(df):
 	return sn
 
 
-# In[16]:
+# In[68]:
 
 
+#14. Compute volume as (x y z) when depth is greater than 60. In case of depth less than 60 default volume to 8.
 def vol(df):
     vol = []
     for i in range(len(df)):
@@ -157,6 +158,107 @@ def vol(df):
             vol.append(8)
     df['volume'] = vol
     return df
+
+
+# In[69]:
+
+
+#14. Compute volume as (x y z) when depth is greater than 60. 
+#In case of depth less than 60 default volume to 8. 15. Impute missing price values with mean
+def impute(df):
+	#df['price'].fillna(value=df['price'].mean(),inplace = True) //for change in dataframe
+	im = df['price'].fillna(value=df['price'].mean())
+	return im
+
+
+# # Bonus Questions
+
+# In[70]:
+
+
+#Generate a report that tracks the various Genere combinations for each type year on year. 
+#The result data frame should contain type, Genere_combo, year, avg_rating, min_rating, max_rating, total_run_time_mins 
+def genre(df):
+    df['GenreCombo']=df[df.columns[16:]].T.apply(lambda g: '|'.join(g.index[g==1]),axis=0)
+    df=df.groupby(['type','year','GenreCombo'],as_index=False).agg({'imdbRating':[min,max,np.mean],'duration':np.sum})
+    return df
+
+
+# In[71]:
+
+
+#Generate a report that captures the trend of the number of letters in movies titles over years. 
+#We expect a cross tab between the year of the video release and the quantile that length fall under. 
+#The results should contain year, min_length, max_length, num_videos_less_than25Percentile, num_videos_25_50Percentile , 
+#num_videos_50_75Percentile, num_videos_greaterthan75Precentile
+def titlelength_year(df):
+    df['Title_length'] = df['wordsInTitle'].str.len()
+    df['Quantile']=pd.qcut(df['Title_length'], q=4, labels=False)
+    df2=pd.crosstab(df.year,df.Quantile,margins=False)
+    df2["min_length"]=df.groupby(["year"])["Title_length"].min()
+    df2["max_length"]=df.groupby(["year"])["Title_length"].max()
+    return(df2)
+
+
+# In[72]:
+
+
+#In diamonds data set Using the volumne calculated above, create bins that have equal population within them. 
+#Generate a report that contains cross tab between bins and cut. Represent the number under each cell as a percentage of total.
+def vol(df):
+    vol = []
+    for i in range(len(df)):
+        if(df['depth'][i] > 60):
+            if(df['z'][i] == 'None'):
+                vol.append(np.nan)
+            else:
+                vol.append(float(df['x'][i])*float(df['y'][i])*float(df['z'][i]))
+        else:
+            vol.append(8)
+    df['volume'] = vol
+    df['bins'] = pd.qcut(df['volume'],4,labels = False)
+    df2 = pd.crosstab(df.bins,df.cut).apply(lambda r: r/r.sum(), axis=1)
+    return df2
+
+
+# In[73]:
+
+
+#Generate a report that tracks the Avg. imdb rating quarter on quarter, in the last 10 years, 
+#for movies that are top performing. You can take the top 10% grossing movies every quarter. 
+#Add the number of top performing movies under each genere in the report as well. 
+import math
+def imdbRating_decile(df):
+    year = df['title_year'].unique()
+    df['url'] = df['movie_imdb_link'].apply(lambda x: x.split('?')[0])
+    b4 = pd.DataFrame()
+    a = 0.1
+    for i in year:
+        new = df[df['title_year'] == i]
+        gr = new.sort_values('gross',ascending=False).apply(lambda x : x.head(math.ceil(len(x) * a)))
+        b4 = b4.append(gr)
+    new = pd.merge(b4,df_i,on = 'url',how='left')
+    genres = new.loc[:,'Action':'Western'].columns.tolist()
+    res = new.groupby('title_year')[genres].sum()
+    res['Avg_Imdb'] = new.groupby('title_year')['imdb_score'].mean()
+    return(res)
+
+
+# In[74]:
+
+
+#Bucket the movies into deciles using the duration. 
+#Generate the report that tracks various features like nomiations, wins, count, top 3 geners in each decile.
+def bonus_5(df):
+    df['bins'] = pd.qcut(df['duration'],10,labels = False)
+    df2 = df.groupby(['bins']).agg(total_nominations = ("nrOfNominations","sum"),
+                               total_wins = ("nrOfWins","sum"))
+    df2['total_count'] = df.groupby(['bins'])['year'].count()
+    tg = (df.groupby("bins")[df.loc[:,'Action':'Western'].columns.tolist()].sum()).T
+    tg_count = pd.DataFrame(tg.apply(lambda a: a.nlargest(3).index,axis=0).transpose(),)
+    tg_count.columns = ["First","Second","Third"]
+    df2['Top 3 Genres'] = tg_count["First"] + "," + tg_count["Second"] + "," + tg_count["Third"]
+    return df2
 
 
 # In[ ]:
